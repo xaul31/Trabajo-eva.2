@@ -1,5 +1,5 @@
 import hashlib
-from time import time
+import time
 import oracledb
 import os
 from dotenv import load_dotenv
@@ -122,4 +122,60 @@ def mostrar_menu():
     print("12. Listar estudiantes por curso")
     print("13. Salir")
 
-    
+
+def main():
+    db = ConexionBD()
+    db.conectar()
+
+    while True:
+        mostrar_menu()
+
+        opcion = input("Seleccione una opción: ")
+        clear = lambda: os.system('cls')
+        clear()
+        #LISTAR ESTUDIANTE
+        if opcion == "1":
+            estudiantes = db.ejecutar_consulta("SELECT * FROM estudiantes")
+            inscripciones = db.ejecutar_consulta("SELECT estudiante_id, curso_id FROM inscripciones")
+            cursos = db.ejecutar_consulta("SELECT id, nombre FROM cursos")
+            clear = lambda: os.system('cls')
+            clear()
+            print("--- Lista de Estudiantes  ---")
+            for est in estudiantes:
+                cursos_ids = [i[1] for i in inscripciones if i[0] == est[0]]
+                cursos_nombres = [c[1] for c in cursos if c[0] in cursos_ids]
+                cursos_str = ', '.join(cursos_nombres) if cursos_nombres else 'Sin cursos'
+                print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[1]}\033[0m, Edad: {est[2]}, RUT: {est[3]}, Cursos: {cursos_str}")
+            print("")
+            print("Estudiantes totales: \033[92m{}\033[0m".format(len(estudiantes)))
+        #AGREGAR ESTUDIANTE
+        elif opcion == "2":
+            try:
+                nombre = input("Ingrese el nombre del estudiante: ").strip()
+                if not nombre or len(nombre) < 3:
+                    print("\033[31mEl nombre no puede estar vacío y debe tener al menos 3 caracteres.\033[0m")
+                    continue
+                nombre = nombre.capitalize()
+                edad = int(input("Ingrese la edad del estudiante: "))
+                if edad < 15 or edad > 99:
+                    print("La edad debe estar entre 15 y 99 años.")
+                    continue
+                db.ejecutar_instruccion(
+                    "INSERT INTO estudiantes (nombre, edad) VALUES (?, ?)",
+                    (nombre, edad)
+                )
+                try:
+                    estudiantes = db.ejecutar_consulta("SELECT * FROM estudiantes")
+                    clear = lambda: os.system('cls')
+                    clear()
+                    print("\n--- Lista Actualizada de Estudiantes ---")
+                    for est in estudiantes:
+                        print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[1]}\033[0m, Edad: {est[2]}")
+                except Exception as e:
+                    print("\033[31mError al recuperar la lista de estudiantes:\033[0m", e)
+            except ValueError:
+                print("\033[31mEdad inválida. Debe ser un número.\033[0m")
+
+if __name__ == "__main__":
+    if login():
+        main()
