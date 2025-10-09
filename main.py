@@ -3,6 +3,7 @@ import os
 import oracledb
 from dotenv import load_dotenv
 import hashlib
+import pwinput
 
 load_dotenv()
 
@@ -73,7 +74,7 @@ def validar_semestre(valor: str) -> bool:
     if tramo not in ("1", "2"):
         return False
     return True
-'''def login():
+def login():
 
     load_dotenv()
     admin_user = os.getenv("ADMIN_USER")
@@ -102,7 +103,7 @@ def validar_semestre(valor: str) -> bool:
                 print("\033[31mDemasiados intentos fallidos. Saliendo...\033[0m")
     input("Presione Enter para salir...")
     return False
-    '''
+    
 
 def mostrar_menu():
     print("\n--- MENÚ PRINCIPAL ---")
@@ -182,5 +183,5 @@ def main():
             print("\033[31mOpción inválida. Intente de nuevo.\033[0m")
             continue
 if __name__ == "__main__":
-    #if login():
+    if login():
         main()
