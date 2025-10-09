@@ -6,8 +6,11 @@ Aplicación de consola en Python para gestionar estudiantes, profesores, cursos 
 - SQL Server (local o remoto)
 - Controlador ODBC Driver 17 for SQL Server instalado
 - Paquetes Python:
-	- python-dotenv
-	- pwinput
+    - import hashlib
+    - import os
+    - import oracledb
+    - from dotenv import load_dotenv
+    - import hashlib
 
 > Importante no subir el .env al repo 
 
