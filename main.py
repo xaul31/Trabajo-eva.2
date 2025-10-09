@@ -1,7 +1,7 @@
 import hashlib
 import os
+import oracledb
 from dotenv import load_dotenv
-import pwinput
 import hashlib
 
 load_dotenv()
@@ -103,6 +103,7 @@ def validar_semestre(valor: str) -> bool:
     input("Presione Enter para salir...")
     return False
     '''
+
 def mostrar_menu():
     print("\n--- MENÚ PRINCIPAL ---")
     print("1. Listar estudiantes")
@@ -119,17 +120,16 @@ def mostrar_menu():
     print("12. Listar estudiantes por curso")
     print("13. Salir")
 
-
 def main():
     db = ConexionBD()
     db.conectar()
 
     while True:
         mostrar_menu()
-
         opcion = input("Seleccione una opción: ")
         clear = lambda: os.system('cls')
         clear()
+
         #LISTAR ESTUDIANTE
         if opcion == "1":
             estudiantes = db.ejecutar_consulta("SELECT * FROM estudiantes")
@@ -172,7 +172,15 @@ def main():
                     print("\033[31mError al recuperar la lista de estudiantes:\033[0m", e)
             except ValueError:
                 print("\033[31mEdad inválida. Debe ser un número.\033[0m")
-
+        elif opcion == "13":
+            print("\nSaliendo")
+            db.cerrar_conexion()
+            break
+        else:
+            clear = lambda: os.system('cls')
+            clear()
+            print("\033[31mOpción inválida. Intente de nuevo.\033[0m")
+            continue
 if __name__ == "__main__":
     #if login():
         main()
