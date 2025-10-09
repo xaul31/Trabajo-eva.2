@@ -1,9 +1,8 @@
 import hashlib
-import time
-import oracledb
 import os
 from dotenv import load_dotenv
 import pwinput
+import hashlib
 
 load_dotenv()
 
@@ -74,7 +73,7 @@ def validar_semestre(valor: str) -> bool:
     if tramo not in ("1", "2"):
         return False
     return True
-def login():
+'''def login():
 
     load_dotenv()
     admin_user = os.getenv("ADMIN_USER")
@@ -93,7 +92,6 @@ def login():
         password = pwinput.pwinput("Contraseña: ").strip()
         if usuario == admin_user and _hash_password(password, admin_salt) == admin_hash:
             print("\033[92mLogin exitoso.\033[0m")
-            time.sleep(0.6)
             clear = lambda: os.system('cls')
             clear()
             return True
@@ -101,11 +99,10 @@ def login():
             restantes = MAX_INTENTOS - intento
             print(f"\033[31mCredenciales inválidas. Intentos restantes: {restantes}\033[0m")
             if restantes:
-                time.sleep(min(1.5 * intento, 4))
-
-    print("\033[31mDemasiados intentos fallidos. Saliendo...\033[0m")
+                print("\033[31mDemasiados intentos fallidos. Saliendo...\033[0m")
     input("Presione Enter para salir...")
     return False
+    '''
 def mostrar_menu():
     print("\n--- MENÚ PRINCIPAL ---")
     print("1. Listar estudiantes")
@@ -177,5 +174,5 @@ def main():
                 print("\033[31mEdad inválida. Debe ser un número.\033[0m")
 
 if __name__ == "__main__":
-    if login():
+    #if login():
         main()
