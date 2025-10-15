@@ -242,6 +242,125 @@ def main():
                 print("-"*34)
             except Exception as e:
                 print("Error al recuperar la lista de profesores:", e)
+         #ELIMINAR PROFESOR POR ID
+        elif opcion == "7":
+            try:
+                print("\n--- Lista de Profesores ---")
+                profesores = db.ejecutar_consulta("Select * from profesores")
+                for prof in profesores:
+                    print(f"id: {prof[0]}, Nombre: \033[92m{prof[1]}\033[0m")
+                print("-"*34)
+                profesor_a_eliminar = int(input("Ingrese el ID del profesor a eliminar: "))
+                # Verificar si el profesor tiene cursos asignados
+                cursos_profesor = db.ejecutar_consulta("SELECT id FROM cursos WHERE profesor_id = ?", (profesor_a_eliminar,))
+                if cursos_profesor:
+                    print("\033[31mNo se puede eliminar el profesor porque tiene cursos asignados.\033[0m")
+                else:
+                    db.ejecutar_instruccion(
+                        "DELETE FROM profesores WHERE id = ?",(profesor_a_eliminar,))
+                    profesores = db.ejecutar_consulta("Select * from profesores")
+                    print("\n--- Lista Actualizada de Profesores ---")
+                    for prof in profesores:
+                        print(f"id: {prof[0]}, Nombre: \033[92m{prof[1]}\033[0m")
+                    print("-"*34)
+            except Exception as e:
+                print("Error al recuperar la lista de profesores:", e)
+
+        #Agregar estudiante a curso
+        elif opcion == "8":
+            print("\n--- Agregar Estudiante a Curso ---")
+            try:
+                estudiantes = db.ejecutar_consulta("SELECT * FROM estudiantes")
+                print("Estudiantes:")
+                for est in estudiantes:
+                    print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[1]}\033[0m, Edad: {est[2]}")
+                print("")
+                cursos = db.ejecutar_consulta("SELECT * FROM cursos")
+                print("Cursos:")
+                for curso in cursos:
+                    print(f"Curso Id: \033[31m{curso[0]}\033[0m, Nombre: \033[92m{curso[1]}\033[0m")
+                print("")
+                agregar_estudiante_a_curso = input("Ingrese el ID del estudiante a agregar al curso: ")
+
+                try:
+                    estudiante_id = int(agregar_estudiante_a_curso)
+                except ValueError:
+                    print("El ID del estudiante debe ser un número válido.")
+                    continue
+
+                estudiante = db.ejecutar_consulta("SELECT nombre FROM estudiantes WHERE id = ?", (estudiante_id,))
+                if not estudiante:
+                    print("No existe un estudiante con ese ID.")
+                    continue
+                try:
+                    curso_id = input("Ingrese el ID del curso al que desea agregar al estudiante: ")
+                    curso_id = int(curso_id)
+                except ValueError:
+                    print("El ID del curso debe ser un número válido.")
+                    continue
+                curso = db.ejecutar_consulta("SELECT nombre FROM cursos WHERE id = ?", (curso_id,))
+                if not curso:
+                    print("No existe un curso con ese ID.")
+                    continue
+                # Validar si ya está inscrito
+                ya_inscrito = db.ejecutar_consulta(
+                    "SELECT 1 FROM inscripciones WHERE estudiante_id = ? AND curso_id = ?",
+                    (estudiante_id, curso_id)
+                )
+                if ya_inscrito:
+                    print(f"\033[31mEl estudiante ya está inscrito en ese curso.\033[0m")
+                else:
+                    db.ejecutar_instruccion(
+                        "INSERT INTO inscripciones (estudiante_id, curso_id) VALUES (?, ?)",
+                        (estudiante_id, curso_id)
+                    )
+                    print(f"Estudiante \033[92m{estudiante[0][0]}\033[0m agregado al curso exitosamente: \033[92m{curso[0][0]}\033[0m")
+            except Exception as e:
+                print("Error al agregar estudiante al curso:", e)
+        
+        # CREAR CURSO
+        elif opcion == "9":
+            print("\n--- Crear Curso ---")
+            try:
+                nombre_curso = input("Nombre del curso: ").strip()
+                if not nombre_curso or len(nombre_curso) < 3:
+                    print("Nombre inválido.")
+                    continue
+                semestre = input("Semestre (formato YYYY-1 o YYYY-2): ").strip()
+                if not validar_semestre(semestre):
+                    print("Formato de semestre inválido.")
+                    continue
+                profesores = db.ejecutar_consulta("SELECT id, nombre FROM profesores")
+                if not profesores:
+                    print("Debe crear un profesor antes de crear cursos.")
+                    continue
+                print("Profesores disponibles:")
+                for p in profesores:
+                    print(f"Profesor Id: {p[0]}, Nombre: {p[1]}")
+                try:
+                    profesor_id = int(input("Ingrese el ID del profesor responsable: "))
+                except ValueError:
+                    print("ID inválido.")
+                    continue
+                existe_prof = [p for p in profesores if p[0] == profesor_id]
+                if not existe_prof:
+                    print("No existe un profesor con ese ID.")
+                    continue
+                # Intentar insertar considerando que la tabla tenga columna semestre
+                try:
+                    db.ejecutar_instruccion(
+                        "INSERT INTO cursos (nombre, semestre, profesor_id) VALUES (?, ?, ?)",
+                        (nombre_curso.capitalize(), semestre, profesor_id)
+                    )
+                except Exception as e:
+                    # fallback por si la tabla aún no tiene semestre
+                    if 'column' in str(e).lower() and 'semestre' in str(e).lower():
+                        print("La columna 'semestre' no existe en la tabla 'cursos'. Ejecute: ALTER TABLE cursos ADD semestre NVARCHAR(10);")
+                    else:
+                        print("Error al crear el curso:", e)
+            except Exception as e:
+                print("Error al procesar la creación del curso:", e)
+
 
         
         elif opcion == "13":
