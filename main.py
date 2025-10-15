@@ -207,6 +207,42 @@ def main():
                 print("-----------------------------")
             except ValueError:
                 print("\033[31mID inválido. Debe ser un número.\033[0m")
+
+             
+        #MODIFICAR ESTUDIANTE POR ID
+        elif opcion == "5":
+            print("\n--- Modificar Estudiante ---")
+            try:
+                edad = int(input("Ingrese la edad del estudiante: "))
+                id = input("Ingrese el ID del estudiante a modificar: ").strip()
+                if not id.isdigit():
+                    print("El ID debe ser un número válido.")
+                    continue
+                if edad < 15 or edad > 99:
+                    print("La edad debe estar entre 15 y 99 años.")
+                    continue
+                
+                for est in estudiantes:
+                    print(f"id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[1]}\033[0m, Edad: {est[2]}, RUT: {est[3]}")
+            except ValueError:
+                print("Edad inválida. Debe ser un número.")
+        #Profesores
+        elif opcion == "6":
+            try:
+                print("\n--- Lista de Profesores y sus Cursos ---")
+                profesores = db.ejecutar_consulta("SELECT id, nombre FROM profesores")
+                cursos = db.ejecutar_consulta("SELECT id, nombre, profesor_id FROM cursos")
+                for prof in profesores:
+                    cursos_prof = [c[1] for c in cursos if c[2] == prof[0]]
+                    if cursos_prof:
+                        for curso in cursos_prof:
+                            print(f"Profesor id: {prof[0]}, Nombre: \033[92m{prof[1]}\033[0m, Curso: {curso}")
+                    else:
+                        print(f"Profesor id: {prof[0]}, Nombre: \033[92m{prof[1]}\033[0m, Curso: Sin curso asignado")
+                print("-"*34)
+            except Exception as e:
+                print("Error al recuperar la lista de profesores:", e)
+
         
         elif opcion == "13":
             print("\nSaliendo")
