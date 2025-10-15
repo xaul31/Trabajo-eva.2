@@ -10,9 +10,6 @@ Aplicación de consola en Python para gestionar estudiantes, profesores, cursos 
 pip install dotenv oracledb pwinput
 ```
 
-
-> Importante no subir el .env al repo 
-
 ## Menú
 1. Listar estudiantes
 2. Agregar estudiante
@@ -35,13 +32,24 @@ pip install dotenv oracledb pwinput
 DB_SERVER=localhost:1521
 DB_NAME=xe
 DB_USER=c##evaluacion_2
-DB_PASSWORD=contraseña231
+DB_PASSWORD=contrasena231
 
 ADMIN_USER=admin
 ADMIN_SALT=S4LT_2025
 ADMIN_PASSWORD_HASH=f6fcf397919a6e23d5892d7ec83c5276245becd194a7260cfa060999a2cf7489  # Ejemplo
 ```
 >Importante no subir el .env al repo (puedes agregarlo al git ignore), Cambiar la SAL y vuelve a generar el hash 
+
+
+### Cómo generar el hash de la contraseña
+Ejemplo (en Python interactivo):
+```python
+import hashlib
+salt = "SALT"          # Debe coincidir con ADMIN_SALT
+password = "contrasena231"  # Tu contraseña real
+print(hashlib.sha256((salt + password).encode()).hexdigest())
+```
+Copias el resultado en `ADMIN_PASSWORD_HASH`.
 
 ## 👤Autores:
 Nelson Villagran, Jorge Campos, Rodrigo Hidalgo, Vicente Mardones, Diego Ceballos
