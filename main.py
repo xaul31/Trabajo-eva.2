@@ -2,7 +2,6 @@ import hashlib
 import os
 import oracledb
 from dotenv import load_dotenv
-import hashlib
 import pwinput
 
 load_dotenv()
@@ -173,6 +172,42 @@ def main():
                     print("\033[31mError al recuperar la lista de estudiantes:\033[0m", e)
             except ValueError:
                 print("\033[31mEdad inválida. Debe ser un número.\033[0m")
+        #Buscar Estudiante por nombre
+        elif opcion == "3":
+            nombre = input("Ingrese el nombre del estudiante a buscar: ").strip()
+            if not nombre:
+                print("\033[31mEl nombre no puede estar vacío.\033[0m")
+                continue
+            nombre = nombre.capitalize()
+            try:
+                estudiantes = db.ejecutar_consulta("SELECT * FROM estudiantes WHERE nombre LIKE ?",(f"{nombre}%",))
+                if estudiantes:
+                    print("\n--- Resultados de la Búsqueda ---")
+                    for est in estudiantes:
+                        print(f"id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[1]}\033[0m, Edad: {est[2]}, RUT: {est[3]}")
+                else:
+                    print("\033[31mNo se encontraron estudiantes con ese nombre.\033[0m")
+            except Exception as e:
+                print("\033[31mError al buscar estudiantes:\033[0m", e)
+        #Eliminar Estudiante
+        elif opcion == "4":
+            estudiantes = db.ejecutar_consulta("SELECT * FROM estudiantes")
+            print("--- Lista de Estudiantes ---")
+            for est in estudiantes:
+                print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[1]}\033[0m, Edad: {est[2]}")
+            print("-----------------------------")
+            try:
+                estudiante_a_eliminar = int(input("Ingrese el ID del estudiante a eliminar: "))
+                db.ejecutar_instruccion(
+                    "DELETE FROM estudiantes WHERE id = ?",(estudiante_a_eliminar,))
+                estudiantes = db.ejecutar_consulta("SELECT * FROM estudiantes")
+                print("\n--- Lista Actualizada de Estudiantes ---")
+                for est in estudiantes:
+                    print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[1]}\033[0m, Edad: {est[2]}")
+                print("-----------------------------")
+            except ValueError:
+                print("\033[31mID inválido. Debe ser un número.\033[0m")
+        
         elif opcion == "13":
             print("\nSaliendo")
             db.cerrar_conexion()
