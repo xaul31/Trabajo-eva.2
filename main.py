@@ -132,9 +132,9 @@ def main():
 
         #LISTAR ESTUDIANTE
         if opcion == "1":
-            estudiantes = db.ejecutar_consulta("SELECT * FROM estudiantes")
-            inscripciones = db.ejecutar_consulta("SELECT estudiante_id, curso_id FROM inscripciones")
-            cursos = db.ejecutar_consulta("SELECT id, nombre FROM cursos")
+            estudiantes = db.ejecutar_consulta("SELECT * FROM estudiante")
+            inscripciones = db.ejecutar_consulta("SELECT id_estudiante, id_curso FROM inscripciones")
+            cursos = db.ejecutar_consulta("SELECT id_curso, nombre FROM cursos")
             clear = lambda: os.system('cls')
             clear()
             print("--- Lista de Estudiantes  ---")
@@ -142,7 +142,7 @@ def main():
                 cursos_ids = [i[1] for i in inscripciones if i[0] == est[0]]
                 cursos_nombres = [c[1] for c in cursos if c[0] in cursos_ids]
                 cursos_str = ', '.join(cursos_nombres) if cursos_nombres else 'Sin cursos'
-                print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[1]}\033[0m, Edad: {est[2]}, RUT: {est[3]}, Cursos: {cursos_str}")
+                print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[2]}\033[0m, Edad: {est[5]}, RUT: {est[1]}, Cursos: {cursos_str}")
             print("")
             print("Estudiantes totales: \033[92m{}\033[0m".format(len(estudiantes)))
         #AGREGAR ESTUDIANTE
