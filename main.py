@@ -364,14 +364,14 @@ def main():
         elif opcion == "10":
             print("\n--- Crear Profesor ---")
             try:
-                nombre_profesor = input("Nombre del profesor: ").strip()
-                if not nombre_profesor or len(nombre_profesor) <3: 
+                nombre_prof = input("Nombre del profesor: ").strip()
+                if not nombre_prof or len(nombre_prof) <3: 
                     print("nombre invalidp")
                     continue 
-                db.ejecutar = nomb_prof.capitalize()
+                db.ejecutar = nombre_prof.capitalize()
                 db.ejecutar_instruccion(
                     "INSERT INTO profesores (nombre) VALUES (?)",
-                    (nombre_profe,) 
+                    (nombre_prof,) 
                 )
             except Exception as e: 
                 print("Error al crear el profesor:", e) 
