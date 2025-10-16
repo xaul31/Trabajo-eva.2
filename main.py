@@ -3,9 +3,18 @@ import os
 import oracledb
 from dotenv import load_dotenv
 import pwinput
-
+import re
+from datetime import datetime
 load_dotenv()
-
+# ================= Utilidades =================
+def _hash_password(raw_password: str, salt: str) -> str:
+    return hashlib.sha256((salt + raw_password).encode('utf-8')).hexdigest()
+def validar_rut(rut):
+    return bool(re.match(r"^\d{1,2}\.\d{3}\.\d{3}-[0-9kK]$", rut))
+def validar_correo(correo):
+    return bool(re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", correo))
+def validar_fecha(fecha):
+    return bool(re.match(r"^\d{4}-\d{2}-\d{2}$", fecha))
 class ConexionBD:
 
     def __init__(self):
@@ -56,9 +65,7 @@ class ConexionBD:
             print("Error al ejecutar la instrucción:", e)
             self.conexion.rollback()
 
-# ================= Utilidades =================
-def _hash_password(raw_password: str, salt: str) -> str:
-    return hashlib.sha256((salt + raw_password).encode('utf-8')).hexdigest()
+
 
 def validar_semestre(valor: str) -> bool:
     """Valida formato de semestre esperado: YYYY-1 o YYYY-2"""
@@ -132,9 +139,14 @@ def main():
 
         #LISTAR ESTUDIANTE
         if opcion == "1":
-            estudiantes = db.ejecutar_consulta("SELECT * FROM estudiante")
-            inscripciones = db.ejecutar_consulta("SELECT id_estudiante, id_curso FROM inscripciones")
-            cursos = db.ejecutar_consulta("SELECT id_curso, nombre FROM cursos")
+            estudiantes = db.ejecutar_consulta("""
+                SELECT id_estudiante, rut, nombre, apellido, correo, fecha_nacimiento,
+                       TRUNC(MONTHS_BETWEEN(TRUNC(SYSDATE), fecha_nacimiento) / 12) AS edad
+                FROM Estudiante
+                ORDER BY id_estudiante asc
+            """)
+            inscripciones = db.ejecutar_consulta("SELECT id_estudiante, id_curso FROM Inscripcion")
+            cursos = db.ejecutar_consulta("SELECT id_curso, nombre FROM Curso")
             clear = lambda: os.system('cls')
             clear()
             print("--- Lista de Estudiantes  ---")
@@ -142,37 +154,60 @@ def main():
                 cursos_ids = [i[1] for i in inscripciones if i[0] == est[0]]
                 cursos_nombres = [c[1] for c in cursos if c[0] in cursos_ids]
                 cursos_str = ', '.join(cursos_nombres) if cursos_nombres else 'Sin cursos'
-                print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[2]}\033[0m, Edad: {est[5]}, RUT: {est[1]}, Cursos: {cursos_str}")
+                print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[2]} {est[3]}\033[0m, Edad: {est[6]}, RUT: {est[1]}, Cursos: {cursos_str}")
             print("")
             print("Estudiantes totales: \033[92m{}\033[0m".format(len(estudiantes)))
         #AGREGAR ESTUDIANTE
         elif opcion == "2":
             try:
                 nombre = input("Ingrese el nombre del estudiante: ").strip()
+                print("Formato: xx.xxx.xxx-x (con puntos y guion)")
+                rut = input("Ingrese el rut del estudiante: ").strip()
                 if not nombre or len(nombre) < 3:
                     print("\033[31mEl nombre no puede estar vacío y debe tener al menos 3 caracteres.\033[0m")
                     continue
-                nombre = nombre.capitalize()
-                edad = int(input("Ingrese la edad del estudiante: "))
-                if edad < 15 or edad > 99:
-                    print("La edad debe estar entre 15 y 99 años.")
+                if not validar_rut(rut):
+                    print("\033[31mEl RUT ingresado no tiene un formato válido.\033[0m")
                     continue
+                apellido = input("Ingrese el apellido del estudiante: ").strip()
+                correo = input("Ingrese el correo del estudiante: ").strip()
+                if not validar_correo(correo):
+                    print("\033[31mEl correo ingresado no tiene un formato válido.\033[0m")
+                    continue
+                fecha_nacimiento = input("Ingrese la fecha de nacimiento del estudiante (YYYY-MM-DD): ").strip()
+                if not validar_fecha(fecha_nacimiento):
+                    print("\033[31mLa fecha de nacimiento no tiene un formato válido (YYYY-MM-DD).\033[0m")
+                    continue
+                nombre = nombre.capitalize()
+                fecha_nac_date = datetime.strptime(fecha_nacimiento, "%Y-%m-%d").date()
                 db.ejecutar_instruccion(
-                    "INSERT INTO estudiantes (nombre, edad) VALUES (?, ?)",
-                    (nombre, edad)
+                    "INSERT INTO Estudiante (id_estudiante, rut, nombre, apellido, correo, fecha_nacimiento) "
+                    "VALUES (seq_estudiante.NEXTVAL, :rut, :nombre, :apellido, :correo, :fecha_nacimiento)",
+                    {
+                        "rut": rut,
+                        "nombre": nombre,
+                        "apellido": apellido,
+                        "correo": correo,
+                        "fecha_nacimiento": fecha_nac_date
+                    }
                 )
                 try:
-                    estudiantes = db.ejecutar_consulta("SELECT * FROM estudiantes")
+                    estudiantes = db.ejecutar_consulta("""
+                        SELECT id_estudiante, rut, nombre, apellido, correo, fecha_nacimiento,
+                               TRUNC(MONTHS_BETWEEN(TRUNC(SYSDATE), fecha_nacimiento) / 12) AS edad
+                        FROM Estudiante
+                        ORDER BY id_estudiante asc
+                    """)
                     clear = lambda: os.system('cls')
                     clear()
                     print("\n--- Lista Actualizada de Estudiantes ---")
                     for est in estudiantes:
-                        print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[1]}\033[0m, Edad: {est[2]}")
+                        print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[2]} {est[3]}\033[0m, Edad: {est[6]}, RUT: {est[1]}")
                 except Exception as e:
                     print("\033[31mError al recuperar la lista de estudiantes:\033[0m", e)
             except ValueError:
                 print("\033[31mEdad inválida. Debe ser un número.\033[0m")
-        #Buscar Estudiante por nombre
+                #Buscar Estudiante por nombre
         elif opcion == "3":
             nombre = input("Ingrese el nombre del estudiante a buscar: ").strip()
             if not nombre:
@@ -180,11 +215,16 @@ def main():
                 continue
             nombre = nombre.capitalize()
             try:
-                estudiantes = db.ejecutar_consulta("SELECT * FROM estudiantes WHERE nombre LIKE ?",(f"{nombre}%",))
+                estudiantes = db.ejecutar_consulta("""
+                    SELECT id_estudiante, rut, nombre, apellido, correo, fecha_nacimiento,
+                           TRUNC(MONTHS_BETWEEN(TRUNC(SYSDATE), fecha_nacimiento) / 12) AS edad
+                    FROM Estudiante
+                    WHERE UPPER(nombre) LIKE UPPER(:nombre)
+                """, {"nombre": f"{nombre}%"})
                 if estudiantes:
                     print("\n--- Resultados de la Búsqueda ---")
                     for est in estudiantes:
-                        print(f"id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[1]}\033[0m, Edad: {est[2]}, RUT: {est[3]}")
+                        print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[2]} {est[3]}\033[0m, Edad: {est[6]}, RUT: {est[1]}")
                 else:
                     print("\033[31mNo se encontraron estudiantes con ese nombre.\033[0m")
             except Exception as e:
