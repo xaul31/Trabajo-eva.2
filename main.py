@@ -360,9 +360,79 @@ def main():
                         print("Error al crear el curso:", e)
             except Exception as e:
                 print("Error al procesar la creación del curso:", e)
+                # CREAR PROFESOR 
+        elif opcion == "10":
+            print("\n--- Crear Profesor ---")
+            try:
+                nombre_profesor = input("Nombre del profesor: ").strip()
+                if not nombre_profesor or len(nombre_profesor) <3: 
+                    print("nombre invalidp")
+                    continue 
+                db.ejecutar = nomb_prof.capitalize()
+                db.ejecutar_instruccion(
+                    "INSERT INTO profesores (nombre) VALUES (?)",
+                    (nombre_profe,) 
+                )
+            except Exception as e: 
+                print("Error al crear el profesor:", e) 
+        # LISTAR CURSOS (DETALLE) 
+        elif opcion == "11":
+            print("\n--- Lista de Cursos (Detalle) ---")
+            try:
+                    cursos = db.ejecutar_consulta("SELECT id, nombre, semestre, profesor_id FROM cursos")
+                    tiene_semestre = True
+            except Exception:
+                cursos = db.ejecutar_consulta("SELECT id, nombre, profesor_id FROM cursos")
+                tiene_semestre = False
+                profesores = {p[0]: p[1] for p in db.ejecutar_consulta("SELECT id, nombre FROM profesores")}
+                if not cursos:
+                    print("No hay cursos registrados.")
+                for c in cursos:
+                    if tiene_semestre:
+                        cid, nombre, semestre, pid = c
+                        prof_nombre = profesores.get(pid, 'Sin profesor')
+                        print(f"Curso Id: \033[31m{cid}\033[0m, Nombre: \033[92m{nombre}\033[0m, Semestre: {semestre}, Profesor: {prof_nombre}")
+                    else:
+                        cid, nombre, pid = c
+                        prof_nombre = profesores.get(pid, 'Sin profesor')
+                        print(f"Curso Id: \033[31m{cid}\033[0m, Nombre: \033[92m{nombre}\033[0m, Profesor: {prof_nombre}")
+            except Exception as e:
+                print("Error al recuperar la lista de cursos:", e)
+
+        # LISTAR ESTUDIANTES POR CURSO
+        elif opcion == "12":
+            print("\n--- Estudiantes por Curso ---")
+            try:
+                cursos = db.ejecutar_consulta("SELECT id, nombre FROM cursos")
+                if not cursos:
+                    print("No hay cursos.")
+                    continue
+                for c in cursos:
+                    print(f"Curso Id: {c[0]}, Nombre: {c[1]}")
+                try:
+                    curso_target = int(input("Ingrese el ID del curso: "))
+                except ValueError:
+                    print("ID invÃ¡lido.")
+                    continue
+                existe = [c for c in cursos if c[0] == curso_target]
+                if not existe:
+                    print("Curso no encontrado.")
+                    continue
+                insc = db.ejecutar_consulta("SELECT estudiante_id FROM inscripciones WHERE curso_id = ?", (curso_target,))
+                if not insc:
+                    print("No hay estudiantes inscritos en este curso.")
+                    continue
+                est_ids = [i[0] for i in insc]
+                estudiantes = db.ejecutar_consulta("SELECT id, nombre, edad FROM estudiantes")
+                print(f"\nEstudiantes inscritos en {existe[0][1]}:")
+                for e in estudiantes:
+                    if e[0] in est_ids:
+                        print(f" - Id: {e[0]} Nombre: {e[1]} Edad: {e[2]}")
+            except Exception as e:
+                print("Error al listar estudiantes por curso:", e)
 
 
-        
+                
         elif opcion == "13":
             print("\nSaliendo")
             db.cerrar_conexion()
