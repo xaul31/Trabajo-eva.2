@@ -1,8 +1,6 @@
-from Funciones import ConexionBD, login, validar_rut, validar_correo, validar_fecha, validar_semestre, mostrar_menu, listarEstudiantes, agregarEstudiante, borrarEstudiante
+from Funciones import ConexionBD, login, mostrar_menu, listarEstudiantes, agregarEstudiante, borrarEstudiante, buscarEstudiante, modificarEstudiante
 import os
 from dotenv import load_dotenv
-from datetime import datetime
-
 load_dotenv()
 
 
@@ -16,83 +14,21 @@ def main():
         opcion = input("Seleccione una opción: ")
         clear = lambda: os.system('cls')
         clear()
-
         #LISTAR ESTUDIANTE
         if opcion == "1":
             listarEstudiantes(db)
         #AGREGAR ESTUDIANTE
         elif opcion == "2":
-            try:
-                nombre = input("Ingrese el nombre del estudiante: ").strip()
-                print("Formato: xx.xxx.xxx-x (con puntos y guion)")
-                rut = input("Ingrese el rut del estudiante: ").strip()
-                if not nombre or len(nombre) < 3:
-                    print("\033[31mEl nombre no puede estar vacío y debe tener al menos 3 caracteres.\033[0m")
-                    continue
-                if not validar_rut(rut):
-                    print("\033[31mEl RUT ingresado no tiene un formato válido.\033[0m")
-                    continue
-                apellido = input("Ingrese el apellido del estudiante: ").strip()
-                correo = input("Ingrese el correo del estudiante: ").strip()
-                if not validar_correo(correo):
-                    print("\033[31mEl correo ingresado no tiene un formato válido.\033[0m")
-                    continue
-                fecha_nacimiento = input("Ingrese la fecha de nacimiento del estudiante (YYYY-MM-DD): ").strip()
-                if not validar_fecha(fecha_nacimiento):
-                    print("\033[31mLa fecha de nacimiento no tiene un formato válido (YYYY-MM-DD).\033[0m")
-                    continue
-                nombre = nombre.capitalize()
-                fecha_nac_date = datetime.strptime(fecha_nacimiento, "%Y-%m-%d").date()
-                db.ejecutar_instruccion(
-                    "INSERT INTO Estudiante (id_estudiante, rut, nombre, apellido, correo, fecha_nacimiento) "
-                    "VALUES (seq_estudiante.NEXTVAL, :rut, :nombre, :apellido, :correo, :fecha_nacimiento)",
-                    {
-                        "rut": rut,
-                        "nombre": nombre,
-                        "apellido": apellido,
-                        "correo": correo,
-                        "fecha_nacimiento": fecha_nac_date
-                    }
-                )
-                try:
-                    estudiantes = db.ejecutar_consulta("""
-                        SELECT id_estudiante, rut, nombre, apellido, correo, fecha_nacimiento,
-                               TRUNC(MONTHS_BETWEEN(TRUNC(SYSDATE), fecha_nacimiento) / 12) AS edad
-                        FROM Estudiante
-                        ORDER BY id_estudiante asc
-                    """)
-                    clear = lambda: os.system('cls')
-                    clear()
-                    print("\n--- Lista Actualizada de Estudiantes ---")
-                    for est in estudiantes:
-                        print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[2]} {est[3]}\033[0m, Edad: {est[6]}, RUT: {est[1]}")
-                except Exception as e:
-                    print("\033[31mError al recuperar la lista de estudiantes:\033[0m", e)
-            except ValueError:
-                print("\033[31mEdad inválida. Debe ser un número.\033[0m")
-                #Buscar Estudiante por nombre
-        elif opcion == "3":
             agregarEstudiante(db)
+        #Buscar Estudiante
+        elif opcion == "3":
+            buscarEstudiante(db)
         #Eliminar Estudiante
         elif opcion == "4":
             borrarEstudiante(db)
         #MODIFICAR ESTUDIANTE POR ID
         elif opcion == "5":
-            print("\n--- Modificar Estudiante ---")
-            try:
-                edad = int(input("Ingrese la edad del estudiante: "))
-                id = input("Ingrese el ID del estudiante a modificar: ").strip()
-                if not id.isdigit():
-                    print("El ID debe ser un número válido.")
-                    continue
-                if edad < 15 or edad > 99:
-                    print("La edad debe estar entre 15 y 99 años.")
-                    continue
-                
-                for est in estudiantes:
-                    print(f"id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[1]}\033[0m, Edad: {est[2]}, RUT: {est[3]}")
-            except ValueError:
-                print("Edad inválida. Debe ser un número.")
+            modificarEstudiante(db)
         #Profesores
         elif opcion == "6":
             try:

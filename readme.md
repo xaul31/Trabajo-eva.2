@@ -29,8 +29,8 @@ pip install dotenv oracledb pwinput
 
 ## Archivo .env Ejemplo
 ```env
-DB_SERVER=localhost:1521
-DB_NAME=xe
+DB_SERVER=localhost:1521(en caso local)
+DB_NAME=xe(nombre del listener)
 DB_USER=c##evaluacion_2
 DB_PASSWORD=contrasena231
 
