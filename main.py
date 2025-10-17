@@ -2,19 +2,25 @@ import hashlib
 import os
 import oracledb
 from dotenv import load_dotenv
-import pwinput
-import re
+import pwinput 
+from re import match as formato
 from datetime import datetime
+from Funciones import mostrar_menu, borrarEstudiante, agregarEstudiante, listarEstudiantes
+# Cargar variables de entorno
 load_dotenv()
+
 # ================= Utilidades =================
 def _hash_password(raw_password: str, salt: str) -> str:
     return hashlib.sha256((salt + raw_password).encode('utf-8')).hexdigest()
+# Validaciones
 def validar_rut(rut):
-    return bool(re.match(r"^\d{1,2}\.\d{3}\.\d{3}-[0-9kK]$", rut))
+    return bool(formato(r"^\d{1,2}\.\d{3}\.\d{3}-[0-9kK]$", rut))
 def validar_correo(correo):
-    return bool(re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", correo))
+    return bool(formato(r"^[\w\.-]+@[\w\.-]+\.\w+$", correo))
 def validar_fecha(fecha):
-    return bool(re.match(r"^\d{4}-\d{2}-\d{2}$", fecha))
+    return bool(formato(r"^\d{4}-\d{2}-\d{2}$", fecha))
+
+#Clase del profesor donde nos conectamos a la BD
 class ConexionBD:
 
     def __init__(self):
@@ -81,7 +87,6 @@ def validar_semestre(valor: str) -> bool:
         return False
     return True
 def login():
-
     load_dotenv()
     admin_user = os.getenv("ADMIN_USER")
     admin_salt = os.getenv("ADMIN_SALT", "default_salt")
@@ -111,21 +116,7 @@ def login():
     return False
     
 
-def mostrar_menu():
-    print("\n--- MENÚ PRINCIPAL ---")
-    print("1. Listar estudiantes")
-    print("2. Agregar estudiante")
-    print("3. Buscar estudiante por nombre")
-    print("4. Eliminar estudiante por ID")
-    print("5. Modificar estudiante por ID")
-    print("6. Listar profesores y sus cursos")
-    print("7. Eliminar profesor por ID")
-    print("8. Agregar estudiante a curso")
-    print("9. Crear curso")
-    print("10. Crear profesor")
-    print("11. Listar cursos (detalle)")
-    print("12. Listar estudiantes por curso")
-    print("13. Salir")
+
 
 def main():
     db = ConexionBD()
@@ -139,24 +130,7 @@ def main():
 
         #LISTAR ESTUDIANTE
         if opcion == "1":
-            estudiantes = db.ejecutar_consulta("""
-                SELECT id_estudiante, rut, nombre, apellido, correo, fecha_nacimiento,
-                       TRUNC(MONTHS_BETWEEN(TRUNC(SYSDATE), fecha_nacimiento) / 12) AS edad
-                FROM Estudiante
-                ORDER BY id_estudiante asc
-            """)
-            inscripciones = db.ejecutar_consulta("SELECT id_estudiante, id_curso FROM Inscripcion")
-            cursos = db.ejecutar_consulta("SELECT id_curso, nombre FROM Curso")
-            clear = lambda: os.system('cls')
-            clear()
-            print("--- Lista de Estudiantes  ---")
-            for est in estudiantes:
-                cursos_ids = [i[1] for i in inscripciones if i[0] == est[0]]
-                cursos_nombres = [c[1] for c in cursos if c[0] in cursos_ids]
-                cursos_str = ', '.join(cursos_nombres) if cursos_nombres else 'Sin cursos'
-                print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[2]} {est[3]}\033[0m, Edad: {est[6]}, RUT: {est[1]}, Cursos: {cursos_str}")
-            print("")
-            print("Estudiantes totales: \033[92m{}\033[0m".format(len(estudiantes)))
+            listarEstudiantes(db)
         #AGREGAR ESTUDIANTE
         elif opcion == "2":
             try:
@@ -209,46 +183,10 @@ def main():
                 print("\033[31mEdad inválida. Debe ser un número.\033[0m")
                 #Buscar Estudiante por nombre
         elif opcion == "3":
-            nombre = input("Ingrese el nombre del estudiante a buscar: ").strip()
-            if not nombre:
-                print("\033[31mEl nombre no puede estar vacío.\033[0m")
-                continue
-            nombre = nombre.capitalize()
-            try:
-                estudiantes = db.ejecutar_consulta("""
-                    SELECT id_estudiante, rut, nombre, apellido, correo, fecha_nacimiento,
-                           TRUNC(MONTHS_BETWEEN(TRUNC(SYSDATE), fecha_nacimiento) / 12) AS edad
-                    FROM Estudiante
-                    WHERE UPPER(nombre) LIKE UPPER(:nombre)
-                """, {"nombre": f"{nombre}%"})
-                if estudiantes:
-                    print("\n--- Resultados de la Búsqueda ---")
-                    for est in estudiantes:
-                        print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[2]} {est[3]}\033[0m, Edad: {est[6]}, RUT: {est[1]}")
-                else:
-                    print("\033[31mNo se encontraron estudiantes con ese nombre.\033[0m")
-            except Exception as e:
-                print("\033[31mError al buscar estudiantes:\033[0m", e)
+            agregarEstudiante(db)
         #Eliminar Estudiante
         elif opcion == "4":
-            estudiantes = db.ejecutar_consulta("SELECT * FROM estudiantes")
-            print("--- Lista de Estudiantes ---")
-            for est in estudiantes:
-                print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[1]}\033[0m, Edad: {est[2]}")
-            print("-----------------------------")
-            try:
-                estudiante_a_eliminar = int(input("Ingrese el ID del estudiante a eliminar: "))
-                db.ejecutar_instruccion(
-                    "DELETE FROM estudiantes WHERE id = ?",(estudiante_a_eliminar,))
-                estudiantes = db.ejecutar_consulta("SELECT * FROM estudiantes")
-                print("\n--- Lista Actualizada de Estudiantes ---")
-                for est in estudiantes:
-                    print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[1]}\033[0m, Edad: {est[2]}")
-                print("-----------------------------")
-            except ValueError:
-                print("\033[31mID inválido. Debe ser un número.\033[0m")
-
-             
+            borrarEstudiante(db)
         #MODIFICAR ESTUDIANTE POR ID
         elif opcion == "5":
             print("\n--- Modificar Estudiante ---")
@@ -482,6 +420,7 @@ def main():
             clear()
             print("\033[31mOpción inválida. Intente de nuevo.\033[0m")
             continue
+
 if __name__ == "__main__":
     if login():
         main()
