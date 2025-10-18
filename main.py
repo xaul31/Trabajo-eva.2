@@ -60,7 +60,6 @@ def main():
         # LISTAR ESTUDIANTES POR CURSO
         elif opcion == "12":
             listarEstudiantesPorCurso(db)
-
         # SALIR       
         elif opcion == "13":
             print("\nSaliendo")

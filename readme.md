@@ -29,8 +29,8 @@ pip install dotenv oracledb pwinput
 
 ## Archivo .env Ejemplo
 ```env
-DB_SERVER=localhost:1521(en caso local)
-DB_NAME=xe(nombre del listener)
+DB_SERVER=localhost:1521
+DB_NAME=xe
 DB_USER=c##evaluacion_2
 DB_PASSWORD=contrasena231
 
@@ -39,7 +39,7 @@ ADMIN_SALT=S4LT_2025
 ADMIN_PASSWORD_HASH=f6fcf397919a6e23d5892d7ec83c5276245becd194a7260cfa060999a2cf7489  # Ejemplo
 ```
 >Importante no subir el .env al repo (puedes agregarlo al git ignore), Cambiar la SAL y vuelve a generar el hash 
-
+>En caso de que el host de la bd sea local, el DB_SERVER tiene que estar como en la imagen. Si usa una conexion remota tiene que agregar la dns:1521
 
 ### Cómo generar el hash de la contraseña
 Ejemplo (en Python interactivo):
