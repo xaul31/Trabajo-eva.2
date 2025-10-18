@@ -57,9 +57,9 @@ ADMIN_SALT=S4LT_2025
 ADMIN_PASSWORD_HASH=f6fcf397919a6e23d5892d7ec83c5276245becd194a7260cfa060999a2cf7489  # Ejemplo
 ```
 > **Importante**
->No subir el archivo .env al repositorio (agregarlo al .gitignore)
->Cambia el valor de ADMIN_SALT y vuelve a generar el hash.
->Si usas una base de datos remota, el DB_SERVER debe incluir el host y el puerto (por ejemplo: 192.168.100.25:1521)
+>- No subir el archivo .env al repositorio (agregarlo al .gitignore)
+>- Cambia el valor de ADMIN_SALT y vuelve a generar el hash.
+>- Si usas una base de datos remota, el DB_SERVER debe incluir el host y el puerto (por ejemplo: 192.168.100.25:1521)
 
 ---
 
