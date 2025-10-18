@@ -51,6 +51,7 @@ def main():
         # CREAR PROFESOR 
         elif opcion == "10":
             crearProfesor(db)
+
         # LISTAR CURSOS (DETALLE) 
         elif opcion == "11":
             listarCursosDetalle(db)
@@ -58,11 +59,13 @@ def main():
         # LISTAR ESTUDIANTES POR CURSO
         elif opcion == "12":
             listarEstudiantesPorCurso(db)
+
         # SALIR       
         elif opcion == "13":
             print("\nSaliendo")
             db.cerrar_conexion()
             break
+        
         else:
             clear = lambda: system('cls')
             clear()
@@ -74,6 +77,6 @@ if __name__ == "__main__":
         if login():
             main()
     except KeyboardInterrupt:
-        print("\n\nSesión cerrada")
+        print("\n\nSesóon cerrada")
         input("Presione Enter para continuar...")
         db.cerrar_conexion()
