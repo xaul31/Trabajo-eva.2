@@ -1,22 +1,22 @@
-import hashlib
-import re
+from hashlib import sha256
+from re import match
 import oracledb
 from dotenv import load_dotenv
-import os
-import pwinput
+from os import getenv,system
+from pwinput import pwinput
 from datetime import datetime
 load_dotenv()
 
 # ================= Utilidades =================
 
 def _hash_password(raw_password: str, salt: str) -> str:
-    return hashlib.sha256((salt + raw_password).encode('utf-8')).hexdigest()
-def validar_rut(rut):
-    return bool(re.match(r"^\d{1,2}\.\d{3}\.\d{3}-[0-9kK]$", rut))
-def validar_correo(correo):
-    return bool(re.match(r"^[\w\.-]+@[\w\.-]+\.\w+$", correo))
-def validar_fecha(fecha):
-    return bool(re.match(r"^\d{4}-\d{2}-\d{2}$", fecha))
+    return sha256((salt + raw_password).encode('utf-8')).hexdigest()
+def validar_rut(rut):# Formato: xx.xxx.xxx-x
+    return bool(match(r"^\d{1,2}\.\d{3}\.\d{3}-[0-9kK]$", rut))
+def validar_correo(correo):#Formato: local@dominio.com
+    return bool(match(r"^[\w\.-]+@[\w\.-]+\.\w+$", correo))
+def validar_fecha(fecha):#
+    return bool(match(r"^\d{4}-\d{2}-\d{2}$", fecha))
 def validar_semestre(valor: str) -> bool:
     """Valida formato de semestre esperado: YYYY-1 o YYYY-2"""
     if not valor or len(valor) != 6:
@@ -52,9 +52,9 @@ def mostrar_menu():
 def login():
 
     load_dotenv()
-    admin_user = os.getenv("ADMIN_USER")
-    admin_salt = os.getenv("ADMIN_SALT", "default_salt")
-    admin_hash = os.getenv("ADMIN_PASSWORD_HASH")
+    admin_user = getenv("ADMIN_USER")
+    admin_salt = getenv("ADMIN_SALT", "default_salt")
+    admin_hash = getenv("ADMIN_PASSWORD_HASH")
 
     if not admin_user or not admin_hash:
         admin_user = admin_user or "admin"
@@ -65,10 +65,10 @@ def login():
     print("=== SISTEMA ACADEMICO DE INSCRIPCION ===")
     for intento in range(1, MAX_INTENTOS + 1):
         usuario = input("Usuario: ").strip()
-        password = pwinput.pwinput("Contraseña: ").strip()
+        password = pwinput("Contraseña: ").strip()
         if usuario == admin_user and _hash_password(password, admin_salt) == admin_hash:
             print("\033[92mLogin exitoso.\033[0m")
-            clear = lambda: os.system('cls')
+            clear = lambda: system('cls')
             clear()
             return True
         else:
@@ -76,18 +76,17 @@ def login():
             print(f"\033[31mCredenciales inválidas. Intentos restantes: {restantes}\033[0m")
             if restantes:
                 print("\033[31mDemasiados intentos fallidos. Saliendo...\033[0m")
-    input("Presione Enter para salir...")
-    return False
+    return False 
 
 # ================= Conexión a la BD =================
 
 class ConexionBD:
 
     def __init__(self):
-        self.servidor = os.getenv("DB_SERVER")
-        self.base_datos = os.getenv("DB_NAME")
-        self.usuario = os.getenv("DB_USER")
-        self.contrasena = os.getenv("DB_PASSWORD")
+        self.servidor = getenv("DB_SERVER")
+        self.base_datos = getenv("DB_NAME")
+        self.usuario = getenv("DB_USER")
+        self.contrasena = getenv("DB_PASSWORD")
         self.conexion = None
 
     def conectar(self):
@@ -98,7 +97,7 @@ class ConexionBD:
                 password=self.contrasena,
                 dsn=dsn
             )
-            clear = lambda: os.system('cls')
+            clear = lambda: system('cls')
             clear()
             print("\033[92mConexión exitosa a Oracle.\033[0m")
         except Exception as e:
@@ -148,7 +147,7 @@ def listarEstudiantes(db):
             """)
     inscripciones = db.ejecutar_consulta("SELECT id_estudiante, id_curso FROM Inscripcion")
     cursos = db.ejecutar_consulta("SELECT id_curso, nombre FROM Curso")
-    clear = lambda: os.system('cls')
+    clear = lambda: system('cls')
     clear()
     print("--- Lista de Estudiantes  ---")
     for est in estudiantes:
@@ -208,7 +207,7 @@ def agregarEstudiante(db):
                     FROM Estudiante
                     ORDER BY id_estudiante asc
                 """)
-                clear = lambda: os.system('cls')
+                clear = lambda: system('cls')
                 clear()
                 print("\n--- Lista Actualizada de Estudiantes ---")
                 for est in estudiantes:
@@ -433,28 +432,49 @@ def listarProfesoresYCursos(db):#completo
         print("Error al recuperar la lista de profesores:", e)
 
 #OPCION 7 ELIMINAR PROFESOR POR ID
-def borrarProfesor(db): #<-- incompleto
+def borrarProfesor(db):
     try:
         print("\n--- Lista de Profesores ---")
-        profesores = db.ejecutar_consulta("Select * from profesores")
+        profesores = db.ejecutar_consulta("""
+            SELECT id_profesor, nombre, apellido
+            FROM Profesor
+            ORDER BY id_profesor
+        """)
         for prof in profesores:
-            print(f"id: {prof[0]}, Nombre: \033[92m{prof[1]}\033[0m")
+            print(f"id: {prof[0]}, Nombre: \033[92m{prof[1]} {prof[2]}\033[0m")
         print("-"*34)
-        profesor_a_eliminar = int(input("Ingrese el ID del profesor a eliminar: "))
+
+        id_txt = input("Ingrese el ID del profesor a eliminar: ").strip()
+        if not id_txt.isdigit():
+            print("\033[31mEl ID debe ser numérico.\033[0m")
+            return
+        profesor_id = int(id_txt)
+
         # Verificar si el profesor tiene cursos asignados
-        cursos_profesor = db.ejecutar_consulta("SELECT id FROM cursos WHERE profesor_id = ?", (profesor_a_eliminar,))
+        cursos_profesor = db.ejecutar_consulta(
+            "SELECT 1 FROM Curso WHERE id_profesor = :id",
+            {"id": profesor_id}
+        )
         if cursos_profesor:
             print("\033[31mNo se puede eliminar el profesor porque tiene cursos asignados.\033[0m")
-        else:
-            db.ejecutar_instruccion(
-                "DELETE FROM profesores WHERE id = ?",(profesor_a_eliminar,))
-            profesores = db.ejecutar_consulta("Select * from profesores")
-            print("\n--- Lista Actualizada de Profesores ---")
-            for prof in profesores:
-                print(f"id: {prof[0]}, Nombre: \033[92m{prof[1]}\033[0m")
-            print("-"*34)
+            return
+
+        db.ejecutar_instruccion(
+            "DELETE FROM Profesor WHERE id_profesor = :id",
+            {"id": profesor_id}
+        )
+
+        profesores = db.ejecutar_consulta("""
+            SELECT id_profesor, nombre, apellido
+            FROM Profesor
+            ORDER BY id_profesor
+        """)
+        print("\n--- Lista Actualizada de Profesores ---")
+        for prof in profesores:
+            print(f"id: {prof[0]}, Nombre: \033[92m{prof[1]} {prof[2]}\033[0m")
+        print("-"*34)
     except Exception as e:
-        print("Error al recuperar la lista de profesores:", e)
+        print("Error al eliminar profesor:", e)
 
 
 #opcion 8 AGREGAR ESTUDIANTE A CURSO
