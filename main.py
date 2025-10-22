@@ -40,17 +40,16 @@ def main():
         elif opcion == "7":
             borrarProfesor(db)
 
-        #Agregar estudiante a curso
+        #Agregar profesor
         elif opcion == "8":
-            agregarEstudianteACurso(db)
-        
-        # CREAR CURSO
-        elif opcion == "9":
-            crearCurso(db)
-
-        # CREAR PROFESOR 
-        elif opcion == "10":
             crearProfesor(db)
+
+        # CREAR Agregar Estudiante a curso
+        elif opcion == "9":
+            agregarEstudianteACurso(db)
+        # CREAR Curso 
+        elif opcion == "10":
+            crearCurso(db)
 
         # LISTAR CURSOS (DETALLE) 
         elif opcion == "11":
