@@ -615,34 +615,39 @@ def listarCursosDetalle(db): #<-- incompleto
         print("Error al recuperar la lista de cursos:", e)
 
 #OPCION 12 LISTAR ESTUDIANTES POR CURSO
-def listarEstudiantesPorCurso(db): #<-- incompleto
-    while True:
-        print("\n--- Estudiantes por Curso ---")
-        try:
-            cursos = db.ejecutar_consulta("SELECT id, nombre FROM cursos")
-            if not cursos:
-                print("No hay cursos.")
-                continue
-            for c in cursos:
-                print(f"Curso Id: {c[0]}, Nombre: {c[1]}")
-            try:
-                curso_target = int(input("Ingrese el ID del curso: "))
-            except ValueError:
-                print("ID invÃ¡lido.")
-                continue
-            existe = [c for c in cursos if c[0] == curso_target]
-            if not existe:
-                print("Curso no encontrado.")
-                continue
-            insc = db.ejecutar_consulta("SELECT estudiante_id FROM inscripciones WHERE curso_id = ?", (curso_target,))
-            if not insc:
-                print("No hay estudiantes inscritos en este curso.")
-                continue
-            est_ids = [i[0] for i in insc]
-            estudiantes = db.ejecutar_consulta("SELECT id, nombre, edad FROM estudiantes")
-            print(f"\nEstudiantes inscritos en {existe[0][1]}:")
-            for e in estudiantes:
-                if e[0] in est_ids:
-                    print(f" - Id: {e[0]} Nombre: {e[1]} Edad: {e[2]}")
-        except Exception as e:
-            print("Error al listar estudiantes por curso:", e)
+def listarEstudiantesPorCurso(db):#completo
+    print("\n--- Estudiantes por Curso ---")
+    try:
+        cursos = db.ejecutar_consulta("SELECT id_curso, nombre FROM Curso ORDER BY id_curso")
+        if not cursos:
+            print("No hay cursos.")
+            return
+        for c in cursos:
+            print(f"Curso Id: {c[0]}, Nombre: {c[1]}")
+        txt = input("Ingrese el ID del curso: ").strip()
+        if not txt.isdigit():
+            print("ID inválido.")
+            return
+        curso_target = int(txt)
+        existe = [c for c in cursos if c[0] == curso_target]
+        if not existe:
+            print("Curso no encontrado.")
+            return
+
+        estudiantes = db.ejecutar_consulta("""
+            SELECT e.id_estudiante, e.nombre, e.apellido, e.rut
+            FROM Estudiante e
+            JOIN Inscripcion i ON i.id_estudiante = e.id_estudiante
+            WHERE i.id_curso = :c
+            ORDER BY e.id_estudiante
+        """, {"c": curso_target})
+
+        if not estudiantes:
+            print("No hay estudiantes inscritos en este curso.")
+            return
+
+        print(f"\nEstudiantes inscritos en {existe[0][1]}:")
+        for e in estudiantes:
+            print(f" - Id: {e[0]} Nombre: {e[1]} {e[2]} RUT: {e[3]}")
+    except Exception as e:
+        print("Error al listar estudiantes por curso:", e)
