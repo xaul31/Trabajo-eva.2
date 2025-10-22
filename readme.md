@@ -35,8 +35,8 @@ pip install oracledb python-dotenv pwinput
 7. Eliminar profesor (bloqueado si tiene cursos)
 8. Agregar profesor
 9. Agregar estudiantes a curso
-10. Crear curso⚠️*en desarrollo*
-11. Listar cursos ⚠️*en desarrollo*
+10. Crear curso 
+11. Listar cursos 
 12. Listar estudiantes por curso 
 13. Salir
 
@@ -85,8 +85,7 @@ Si el login es exitoso, se mostrará el **menú principal** con las distintas op
 
 ## Estado del desarrollo
 Algunas funciones se encuentran en desarrollo o pendientes a mejora
-- `crearCurso`
-- `listarCursosDetalle`
+Done 
 
 ---
 
