@@ -477,7 +477,7 @@ def borrarProfesor(db):
         print("Error al eliminar profesor:", e)
 
 
-#opcion 8 AGREGAR ESTUDIANTE A CURSO
+#opcion 9 AGREGAR ESTUDIANTE A CURSO
 def agregarEstudianteACurso(db):  #completo
     print("\n--- Agregar Estudiante a Curso ---")
     try:
@@ -529,88 +529,104 @@ def agregarEstudianteACurso(db):  #completo
         print(f"Estudiante \033[92m{existe_est[0][1]} {existe_est[0][2]}\033[0m agregado al curso \033[92m{existe_cur[0][1]} ({existe_cur[0][2]})\033[0m")
     except Exception as e:
         print("Error al agregar estudiante al curso:", e)
-#OPCION 9 CREAR CURSO
-def crearCurso(db): #<-- incompleto
-    while True:
-        print("\n--- Crear Curso ---")
-        try:
-            nombre_curso = input("Nombre del curso: ").strip()
-            if not nombre_curso or len(nombre_curso) < 3:
-                print("Nombre inválido.")
-                continue
-            semestre = input("Semestre (formato YYYY-1 o YYYY-2): ").strip()
-            if not validar_semestre(semestre):
-                print("Formato de semestre inválido.")
-                continue
-            profesores = db.ejecutar_consulta("SELECT id, nombre FROM profesores")
-            if not profesores:
-                print("Debe crear un profesor antes de crear cursos.")
-                continue
-            print("Profesores disponibles:")
-            for p in profesores:
-                print(f"Profesor Id: {p[0]}, Nombre: {p[1]}")
-            try:
-                profesor_id = int(input("Ingrese el ID del profesor responsable: "))
-            except ValueError:
-                print("ID inválido.")
-                continue
-            existe_prof = [p for p in profesores if p[0] == profesor_id]
-            if not existe_prof:
-                print("No existe un profesor con ese ID.")
-                continue
-            # Intentar insertar considerando que la tabla tenga columna semestre
-            try:
-                db.ejecutar_instruccion(
-                    "INSERT INTO cursos (nombre, semestre, profesor_id) VALUES (?, ?, ?)",
-                    (nombre_curso.capitalize(), semestre, profesor_id)
-                )
-            except Exception as e:
-                # fallback por si la tabla aún no tiene semestre
-                if 'column' in str(e).lower() and 'semestre' in str(e).lower():
-                    print("La columna 'semestre' no existe en la tabla 'cursos'. Ejecute: ALTER TABLE cursos ADD semestre NVARCHAR(10);")
-                else:
-                    print("Error al crear el curso:", e)
-        except Exception as e:
-            print("Error al procesar la creación del curso:", e)
+#OPCION 10 CREAR CURSO
+def crearCurso(db):#completo
+    print("\n--- Crear Curso ---")
+    try:
+        codigo = input("Código del curso (ej: MAT101): ").strip().upper()
+        if not codigo:
+            print("Código obligatorio.")
+            return
+        nombre_curso = input("Nombre del curso: ").strip()
+        if not nombre_curso or len(nombre_curso) < 3:
+            print("Nombre inválido.")
+            return
+        semestre = input("Semestre (formato YYYY-1 o YYYY-2): ").strip()
+        if not validar_semestre(semestre):
+            print("Formato de semestre inválido.")
+            return
 
-#OPCION 10 CREAR PROFESOR
-def crearProfesor(db): #<-- incompleto
-    while True:
-        print("\n--- Crear Profesor ---")
-        try:
-            nombre_prof = input("Nombre del profesor: ").strip()
-            if not nombre_prof or len(nombre_prof) <3: 
-                print("nombre invalido")
-                continue 
-            db.ejecutar = nombre_prof.capitalize()
-            db.ejecutar_instruccion(
-                "INSERT INTO profesores (nombre) VALUES (?)",
-                (nombre_prof,) 
-            )
-        except Exception as e: 
-            print("Error al crear el profesor:", e)
+        profesores = db.ejecutar_consulta("SELECT id_profesor, nombre, apellido FROM Profesor ORDER BY id_profesor")
+        if not profesores:
+            print("Debe crear un profesor antes de crear cursos.")
+            return
+        print("Profesores disponibles:")
+        for p in profesores:
+            print(f"Profesor Id: {p[0]}, Nombre: {p[1]} {p[2]}")
+
+        pid_txt = input("Ingrese el ID del profesor responsable: ").strip()
+        if not pid_txt.isdigit():
+            print("ID inválido.")
+            return
+        profesor_id = int(pid_txt)
+        existe_prof = [p for p in profesores if p[0] == profesor_id]
+        if not existe_prof:
+            print("No existe un profesor con ese ID.")
+            return
+
+        # Insertar usando las columnas tal como están en tu SQL
+        db.ejecutar_instruccion(
+            "INSERT INTO Curso (id_curso, codigo, nombre, semestre, id_profesor) VALUES (seq_curso.NEXTVAL, :cod, :n, :s, :p)",
+            {"cod": codigo, "n": nombre_curso.capitalize(), "s": semestre, "p": profesor_id}
+        )
+        print("\033[92mCurso creado correctamente.\033[0m")
+    except Exception as e:
+        print("Error al crear el curso:", e)
+
+#OPCION 8 CREAR PROFESOR
+def crearProfesor(db):
+    print("\n--- Crear Profesor ---")
+    try:
+        rut = input("RUT (xx.xxx.xxx-x): ").strip()
+        if not validar_rut(rut):
+            print("RUT inválido.")
+            return
+        nombre = input("Nombre: ").strip()
+        if not nombre or len(nombre) < 3:
+            print("Nombre inválido.")
+            return
+        apellido = input("Apellido: ").strip()
+        correo = input("Correo: ").strip()
+        if correo and not validar_correo(correo):
+            print("Correo inválido.")
+            return
+
+        dup = db.ejecutar_consulta("SELECT 1 FROM Profesor WHERE rut = :rut", {"rut": rut})
+        if dup:
+            print("\033[31mEl RUT ya existe para otro profesor.\033[0m")
+            return
+
+        db.ejecutar_instruccion(
+            "INSERT INTO Profesor (id_profesor, rut, nombre, apellido, correo) VALUES (seq_profesor.NEXTVAL, :rut, :n, :a, :c)",
+            {"rut": rut, "n": nombre.capitalize(), "a": apellido, "c": correo}
+        )
+        print("\033[92mProfesor creado correctamente.\033[0m")
+    except Exception as e:
+        print("Error al crear el profesor:", e)
 
 #OPCION 11 LISTAR CURSOS (DETALLE)
-def listarCursosDetalle(db): #<-- incompleto
+def listarCursosDetalle(db):#completo
     print("\n--- Lista de Cursos (Detalle) ---")
     try:
-        cursos = db.ejecutar_consulta("SELECT id, nombre, semestre, profesor_id FROM cursos")
-        tiene_semestre = True
-    except Exception:
-        cursos = db.ejecutar_consulta("SELECT id, nombre, profesor_id FROM cursos")
-        tiene_semestre = False
-        profesores = {p[0]: p[1] for p in db.ejecutar_consulta("SELECT id, nombre FROM profesores")}
+        cursos = db.ejecutar_consulta("""
+            SELECT c.id_curso, c.nombre, c.semestre, c.id_profesor, p.nombre, p.apellido
+            FROM Curso c
+            LEFT JOIN Profesor p ON p.id_profesor = c.id_profesor
+            ORDER BY c.id_curso
+        """)
         if not cursos:
             print("No hay cursos registrados.")
+            return
+        cont = db.ejecutar_consulta("""
+            SELECT id_curso, COUNT(*) FROM Inscripcion GROUP BY id_curso
+        """)
+        inscritos = {c[0]: c[1] for c in cont}
         for c in cursos:
-            if tiene_semestre:
-                cid, nombre, semestre, pid = c
-                prof_nombre = profesores.get(pid, 'Sin profesor')
-                print(f"Curso Id: \033[31m{cid}\033[0m, Nombre: \033[92m{nombre}\033[0m, Semestre: {semestre}, Profesor: {prof_nombre}")
-            else:
-                cid, nombre, pid = c
-                prof_nombre = profesores.get(pid, 'Sin profesor')
-                print(f"Curso Id: \033[31m{cid}\033[0m, Nombre: \033[92m{nombre}\033[0m, Profesor: {prof_nombre}")
+            cid, nombre, semestre, pid, pnom, pape = c
+            prof_nombre = f"{pnom} {pape}" if pnom else "Sin profesor"
+            count = inscritos.get(cid, 0)
+            sem_text = semestre if semestre else "Sin semestre"
+            print(f"Curso Id: \033[31m{cid}\033[0m, Nombre: \033[92m{nombre}\033[0m, Semestre: {sem_text}, Profesor: {prof_nombre}, Inscritos: {count}")
     except Exception as e:
         print("Error al recuperar la lista de cursos:", e)
 
