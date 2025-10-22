@@ -40,10 +40,10 @@ def mostrar_menu():
     print("5. Modificar estudiante por ID")
     print("6. Listar profesores y sus cursos")
     print("7. Eliminar profesor por ID")
-    print("8. Agregar estudiante a curso")
-    print("9. Crear curso")
-    print("10. Crear profesor")
-    print("11. Listar cursos (detalle)")
+    print("8. Agregar profesor")
+    print("9. Agregar estudiante a curso")
+    print("10. Crear curso")
+    print("11. Listar cursos")
     print("12. Listar estudiantes por curso")
     print("13. Salir")
 
@@ -478,59 +478,57 @@ def borrarProfesor(db):
 
 
 #opcion 8 AGREGAR ESTUDIANTE A CURSO
-def agregarEstudianteACurso(db): #<-- incompleto
+def agregarEstudianteACurso(db):  #completo
     print("\n--- Agregar Estudiante a Curso ---")
-    while True:
-        try:
-            estudiantes = db.ejecutar_consulta("SELECT * FROM estudiantes")
-            print("Estudiantes:")
-            for est in estudiantes:
-                print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[1]}\033[0m, Edad: {est[2]}")
-            print("")
-            cursos = db.ejecutar_consulta("SELECT * FROM cursos")
-            print("Cursos:")
-            for curso in cursos:
-                print(f"Curso Id: \033[31m{curso[0]}\033[0m, Nombre: \033[92m{curso[1]}\033[0m")
-            print("")
-            agregar_estudiante_a_curso = input("Ingrese el ID del estudiante a agregar al curso: ")
+    try:
+        estudiantes = db.ejecutar_consulta("SELECT id_estudiante, nombre, apellido, rut FROM Estudiante ORDER BY id_estudiante")
+        if not estudiantes:
+            print("No hay estudiantes.")
+            return
+        print("Estudiantes:")
+        for est in estudiantes:
+            print(f"Estudiante Id: \033[31m{est[0]}\033[0m, Nombre: \033[92m{est[1]} {est[2]}\033[0m, RUT: {est[3]}")
 
-            try:
-                estudiante_id = int(agregar_estudiante_a_curso)
-            except ValueError:
-                print("El ID del estudiante debe ser un número válido.")
-                continue
+        cursos = db.ejecutar_consulta("SELECT id_curso, codigo, nombre FROM Curso ORDER BY id_curso")
+        if not cursos:
+            print("No hay cursos.")
+            return
+        print("\nCursos:")
+        for curso in cursos:
+            print(f"Curso Id: \033[31m{curso[0]}\033[0m, Código: \033[92m{curso[1]}\033[0m, Nombre: {curso[2]}")
 
-            estudiante = db.ejecutar_consulta("SELECT nombre FROM estudiantes WHERE id = ?", (estudiante_id,))
-            if not estudiante:
-                print("No existe un estudiante con ese ID.")
-                continue
-            try:
-                curso_id = input("Ingrese el ID del curso al que desea agregar al estudiante: ")
-                curso_id = int(curso_id)
-            except ValueError:
-                print("El ID del curso debe ser un número válido.")
-                continue
-            curso = db.ejecutar_consulta("SELECT nombre FROM cursos WHERE id = ?", (curso_id,))
-            if not curso:
-                print("No existe un curso con ese ID.")
-                continue
-            # Validar si ya está inscrito
-            ya_inscrito = db.ejecutar_consulta(
-                "SELECT 1 FROM inscripciones WHERE estudiante_id = ? AND curso_id = ?",
-                (estudiante_id, curso_id)
-            )
-            if ya_inscrito:
-                print(f"\033[31mEl estudiante ya está inscrito en ese curso.\033[0m")
-            else:
-                db.ejecutar_instruccion(
-                    "INSERT INTO inscripciones (estudiante_id, curso_id) VALUES (?, ?)",
-                    (estudiante_id, curso_id)
-                )
-                print(f"Estudiante \033[92m{estudiante[0][0]}\033[0m agregado al curso exitosamente: \033[92m{curso[0][0]}\033[0m")
-        except Exception as e:
-            print("Error al agregar estudiante al curso:", e)
+        est_txt = input("\nIngrese el ID del estudiante a agregar al curso: ").strip()
+        cur_txt = input("Ingrese el ID del curso: ").strip()
+        if not est_txt.isdigit() or not cur_txt.isdigit():
+            print("IDs inválidos.")
+            return
+        estudiante_id = int(est_txt)
+        curso_id = int(cur_txt)
 
+        existe_est = [e for e in estudiantes if e[0] == estudiante_id]
+        existe_cur = [c for c in cursos if c[0] == curso_id]
+        if not existe_est:
+            print("No existe un estudiante con ese ID.")
+            return
+        if not existe_cur:
+            print("No existe un curso con ese ID.")
+            return
 
+        ya = db.ejecutar_consulta(
+            "SELECT 1 FROM Inscripcion WHERE id_estudiante = :e AND id_curso = :c",
+            {"e": estudiante_id, "c": curso_id}
+        )
+        if ya:
+            print("\033[31mEl estudiante ya está inscrito en ese curso.\033[0m")
+            return
+
+        db.ejecutar_instruccion(
+            "INSERT INTO Inscripcion (id_inscripcion, id_estudiante, id_curso) VALUES (seq_inscripcion.NEXTVAL, :e, :c)",
+            {"e": estudiante_id, "c": curso_id}
+        )
+        print(f"Estudiante \033[92m{existe_est[0][1]} {existe_est[0][2]}\033[0m agregado al curso \033[92m{existe_cur[0][1]} ({existe_cur[0][2]})\033[0m")
+    except Exception as e:
+        print("Error al agregar estudiante al curso:", e)
 #OPCION 9 CREAR CURSO
 def crearCurso(db): #<-- incompleto
     while True:
