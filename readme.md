@@ -33,10 +33,10 @@ pip install oracledb python-dotenv pwinput
 5. Modificar edad de estudiante por ID
 6. Listar profesores y sus cursos
 7. Eliminar profesor (bloqueado si tiene cursos)
-8. Agregar estudiante a curso (inscripción) ⚠️*en desarrollo*
-9. Crear curso (con semestre y profesor)⚠️ *en desarrollo*
-10. Crear profesor⚠️*en desarrollo*
-11. Listar cursos (detalle, intenta mostrar semestre)⚠️*en desarrollo*
+8. Agregar profesor
+9. Agregar estudiantes a curso
+10. Crear curso⚠️*en desarrollo*
+11. Listar cursos ⚠️*en desarrollo*
 12. Listar estudiantes por curso⚠️ *en desarrollo*
 13. Salir
 
@@ -85,9 +85,7 @@ Si el login es exitoso, se mostrará el **menú principal** con las distintas op
 
 ## Estado del desarrollo
 Algunas funciones se encuentran en desarrollo o pendientes a mejora
-- `agregarEstudianteACurso`
 - `crearCurso`
-- `crearProfesor`
 - `listarCursosDetalle`
 - `listarEstudiantesPorCurso`
 
