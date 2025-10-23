@@ -510,50 +510,51 @@ def listarProfesoresYCursos(db):
         print("Error al recuperar la lista de profesores:", e)#imprimir mensaje de error
 
 #OPCION 7 ELIMINAR PROFESOR POR ID
-def borrarProfesor(db):#funcion borrar profesor por id
-    try:#capturar errores
+def borrarProfesor(db):  # OPCIÓN 7: borrar profesor y sus cursos/inscripciones
+    try:
         print("\n--- Lista de Profesores ---")
         profesores = db.ejecutar_consulta("""
             SELECT id_profesor, nombre, apellido
             FROM Profesor
             ORDER BY id_profesor
-        """)#obtener filas de profesores
-        for prof in profesores:#recorrer filas de profesores
-            print(f"id: {prof[0]}, Nombre: \033[92m{prof[1]} {prof[2]}\033[0m")#imprimir id y nombre del profesor
-        print("-"*34)
-
-        id_a_eliminar = input("Ingrese el ID del profesor a eliminar: ").strip()#input id profesor a eliminar y quitar espacios
-        if not id_a_eliminar.isdigit():#validar que el id sea numérico
-            print("\033[31mEl ID debe ser numérico.\033[0m")
-            return# salir de la función
-        profesor_id = int(id_a_eliminar)#convertir id a entero y almacenar en variable
-
-        # Verificar si el profesor tiene cursos asignados
-        cursos_profesor = db.ejecutar_consulta(
-            "SELECT 1 FROM Curso WHERE id_profesor = :id",
-            {"id": profesor_id}
-        )#si el profesor tiene cursos asignados, no se puede eliminar
-        if cursos_profesor:#si tiene cursos asignados
-            print("\033[31mNo se puede eliminar el profesor porque tiene cursos asignados.\033[0m")
-            return# salir de la función
-
-        db.ejecutar_instruccion(#eliminar profesor
-            "DELETE FROM Profesor WHERE id_profesor = :id",
-            {"id": profesor_id}
-        )
-
-        profesores = db.ejecutar_consulta("""
-            SELECT id_profesor, nombre, apellido
-            FROM Profesor
-            ORDER BY id_profesor
-        """)#obtener filas de profesores actualizadas
-        print("\n--- Lista Actualizada de Profesores ---")
+        """)
         for prof in profesores:
-            print(f"id: {prof[0]}, Nombre: \033[92m{prof[1]} {prof[2]}\033[0m")#imprimir id y nombre del profesor
+            print(f"id: {prof[0]}, Nombre: \033[92m{prof[1]} {prof[2]}\033[0m")
         print("-"*34)
-    except Exception as e:#capturar errores
-        print("Error al eliminar profesor:", e)
 
+        id_a_eliminar = input("Ingrese el ID del profesor a eliminar: ").strip()
+        if not id_a_eliminar.isdigit():
+            print("\033[31mEl ID debe ser numérico.\033[0m")
+            return
+        profesor_id = int(id_a_eliminar)
+
+        confirma = input("Esto eliminará al profesor, sus cursos y las inscripciones de esos cursos. ¿Continuar? (S/N): ").strip().upper()
+        if confirma != "S":
+            print("Operación cancelada.")
+            return
+
+        # 1) Borrar inscripciones de los cursos del profesor
+        db.ejecutar_instruccion("""
+            DELETE FROM Inscripcion
+            WHERE id_curso IN (SELECT id_curso FROM Curso WHERE id_profesor = :id)
+        """, {"id": profesor_id})
+
+        # 2) Borrar cursos del profesor
+        db.ejecutar_instruccion("""
+            DELETE FROM Curso
+            WHERE id_profesor = :id
+        """, {"id": profesor_id})
+
+        # 3) Borrar profesor
+        db.ejecutar_instruccion("""
+            DELETE FROM Profesor
+            WHERE id_profesor = :id
+        """, {"id": profesor_id})
+
+        print("\033[92mProfesor, sus cursos e inscripciones asociadas eliminados.\033[0m")
+
+    except Exception as e:
+        print("Error al eliminar profesor y dependencias:", e)
 
 #opcion 9 AGREGAR ESTUDIANTE A CURSO
 def agregarEstudianteACurso(db):#definir función
