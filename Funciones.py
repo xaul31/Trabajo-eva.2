@@ -137,40 +137,56 @@ class ConexionBD:#clase para manejar la conexión a la base de datos Oracle
 
 
 
-
-class estudiante:# tiene id_estudiante, rut, nombre, apellido, correo, fecha_nacimiento, edad, cursos
-    def __init__(self, id_estudiante, rut, nombre, apellido, correo, fecha_nacimiento, edad=None, cursos=None):
-        self.id_estudiante = id_estudiante
+#herencia
+class Persona:  # clase base
+    def __init__(self, rut, nombre, apellido, correo):
         self.rut = rut
         self.nombre = nombre
         self.apellido = apellido
         self.correo = correo
+
+    def nombre_completo(self):
+        return f"{self.nombre} {self.apellido}".strip()
+
+
+class estudiante(Persona):  # hereda de Persona
+    # tiene id_estudiante, rut, nombre, apellido, correo, fecha_nacimiento, edad, cursos
+    def __init__(self, id_estudiante, rut, nombre, apellido, correo, fecha_nacimiento, edad=None, cursos=None):
+        super().__init__(rut, nombre, apellido, correo)  # inicializa campos comunes
+        self.id_estudiante = id_estudiante
         self.fecha_nacimiento = fecha_nacimiento
         self.edad = edad
-        self.cursos = cursos or []#lista de nombres de cursos
+        self.cursos = cursos or []  # lista de nombres de cursos
 
-    #polimorfismo
-    def presentacion(self):#cursos es una lista de nombres de cursos, si no hay cursos, mostrar "Sin cursos"
-        cursos_str = ', '.join(self.cursos) if hasattr(self, 'cursos') else 'Sin cursos'
-        return f"Estudiante Id: \033[31m{self.id_estudiante}\033[0m, Nombre: \033[92m{self.nombre} {self.apellido}\033[0m, Edad: {self.edad}, correo:{self.correo}, RUT: {self.rut}, Cursos: {cursos_str}"
-        #Estudiante Id: 1, Nombre: Nelson Perez, Edad: 20, RUT: 12.345.678-9, Cursos: Matemáticas, Física
+    # polimorfismo
+    def presentacion(self):
+        cursos_str = ', '.join(self.cursos) if hasattr(self, 'cursos') and self.cursos else 'Sin cursos'
+        return (
+            f"Estudiante Id: \033[31m{self.id_estudiante}\033[0m, "
+            f"Nombre: \033[92m{self.nombre_completo()}\033[0m, "
+            f"Edad: {self.edad}, correo:{self.correo}, RUT: {self.rut}, Cursos: {cursos_str}"
+        )
 
-class profesor:#tiene id_profesor, rut, nombre, apellido, correo, cursos
+
+class profesor(Persona):  # hereda de Persona
+    # tiene id_profesor, rut, nombre, apellido, correo, cursos
     def __init__(self, id_profesor, rut, nombre, apellido, correo, cursos=None):
+        super().__init__(rut, nombre, apellido, correo)  # inicializa campos comunes
         self.id_profesor = id_profesor
-        self.rut = rut
-        self.nombre = nombre
-        self.apellido = apellido
-        self.correo = correo
-        self.cursos = cursos or []#lista de nombres de cursos
+        self.cursos = cursos or []  # lista de nombres de cursos
 
-    #polimorfismo
-    def presentacion(self):#
-        if self.cursos:#si tiene cursos, mostrar uno por línea profesorid, nombre, apellido, curso, correo
-            return "\n".join([f"Profesor id: {self.id_profesor}, Nombre: \033[92m{self.nombre} {self.apellido}\033[0m, Curso: {c}, Correo: {self.correo}" for c in self.cursos])
-        return f"Profesor id: {self.id_profesor}, Nombre: \033[92m{self.nombre} {self.apellido}\033[0m, Curso: Sin curso asignado, Correo: {self.correo}"
+    # polimorfismo
+    def presentacion(self):
+        if self.cursos:
+            return "\n".join([
+                f"Profesor id: {self.id_profesor}, Nombre: \033[92m{self.nombre_completo()}\033[0m, Curso: {c}, Correo: {self.correo}"
+                for c in self.cursos
+            ])
+        return f"Profesor id: {self.id_profesor}, Nombre: \033[92m{self.nombre_completo()}\033[0m, Curso: Sin curso asignado, Correo: {self.correo}"
 
-class curso:#curso tiene id_curso, codigo, nombre, semestre, id_profesor
+
+class curso:  # sin cambios funcionales
+    # curso tiene id_curso, codigo, nombre, semestre, id_profesor
     def __init__(self, id_curso, codigo, nombre, semestre, id_profesor):
         self.id_curso = id_curso
         self.codigo = codigo
@@ -178,18 +194,17 @@ class curso:#curso tiene id_curso, codigo, nombre, semestre, id_profesor
         self.semestre = semestre
         self.id_profesor = id_profesor
 
+    def presentacion(self, profesor_nombre=None, inscritos=0):
+        prof = profesor_nombre or "Sin profesor"
+        sem = self.semestre if self.semestre else "Sin semestre"
+        return f"Curso Id: \033[31m{self.id_curso}\033[0m, Nombre: \033[92m{self.nombre}\033[0m, Semestre: {sem}, Profesor: {prof}, Inscritos: {inscritos}"
 
-    def presentacion(self, profesor_nombre=None, inscritos=0):#profesor_nombre es el nombre del profesor, inscritos es el número de estudiantes inscritos por defecto 0 para no complicar la llamada
-        prof = profesor_nombre or "Sin profesor"# si el curso no tiene profesor asignado
-        sem = self.semestre if self.semestre else "Sin semestre"#si el curso no tiene semestre asignado
-        return f"Curso Id: \033[31m{self.id_curso}\033[0m, Nombre: \033[92m{self.nombre}\033[0m, Semestre: {sem}, Profesor: {prof}, Inscritos: {inscritos}"#cursoid, nombre, semestre, profesor, inscritos
 
-class inscripcion:
+class inscripcion:  # sin cambios
     def __init__(self, id_inscripcion, id_estudiante, id_curso):
         self.id_inscripcion = id_inscripcion
         self.id_estudiante = id_estudiante
         self.id_curso = id_curso
-
 def cursos_por_estudiante(db):
     inscripciones = db.ejecutar_consulta("SELECT id_estudiante, id_curso FROM Inscripcion")#lista de tuplas (id_estudiante, id_curso)
     cursos = db.ejecutar_consulta("SELECT id_curso, nombre FROM Curso")#lista de tuplas (id_curso, nombre)
