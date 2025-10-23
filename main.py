@@ -76,6 +76,8 @@ if __name__ == "__main__":
         if login():
             main()
     except KeyboardInterrupt:
-        print("\n\nSesóon cerrada")
+        print("\n\nSesión cerrada")
         input("Presione Enter para continuar...")
         db.cerrar_conexion()
+
+
